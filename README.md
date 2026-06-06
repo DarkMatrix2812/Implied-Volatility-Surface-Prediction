@@ -164,9 +164,9 @@ Statistically too, it does minimize our MSE as falling back to the absolute cent
 # 4. Experimental Iterations
 In quantitative finance (or any field for that matter), proving what _failed_ is just as important as proving what _succeeded_. In this section, I deep-dive into failed ideas or strategies that I tried out but did not yield significant returns.
 
-## Total Variance Space ($IV^2$) & Log-Moneyness ($\ln(K/S)$)
+## Total Variance Space ($IV^2$) & Log-Moneyness ($$\ln(K/S)$$)
 **What I tried:**\
-In professional volatility surface construction (like the SVI model), interpolation is rarely done on raw volatility ($\sigma$). Instead, we attempted to map the dataset into Total Variance space ($\sigma^2$) using log-moneyness ($\ln(K/S)$). The theory was that squaring the volatility would smooth the data and prevent butterfly arbitrage, while log-space would create a more symmetric smile.
+In professional volatility surface construction (like the SVI model), interpolation is rarely done on raw volatility ($\sigma$). Instead, we attempted to map the dataset into Total Variance space ($\sigma^2$) using log-moneyness ($$\ln(K/S)$$). The theory was that squaring the volatility would smooth the data and prevent butterfly arbitrage, while log-space would create a more symmetric smile.
 
 **Output and why I think it didn't work:**\
 Mean Squared Error (MSE) worsened by roughly 5%. While this transformation is standard for highly symmetric indices like the S&P 500, the Indian NIFTY 50 exhibits an extreme, asymmetric "Put Skew" driven by downside tail-risk hedging. Log-moneyness forced an artificial symmetry onto the data, while Variance Space mathematically flattened the curvature of the deep wings. Together, they systematically underpriced the deep OTM risk premium.
