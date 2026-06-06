@@ -128,6 +128,8 @@ I used the explicit coordinate projection: $M = \frac{K}{S}$. By standardizing t
 
 **Reasoning:** I first fed the engine raw strike prices as the x-axis. The MSE was highly unstable. I realized that the underlying NIFTY index ($S$) is a moving target. A polynomial fitted to raw strikes will fail because the mathematical vertex of the curve is constantly moving.
 
+![Absolute Moneyness](images/absolute_moneyness.png)
+
 **Phase 2: Filling the Interior**
 ```python
 val = (self.quad_weight * q_pred) + (self.pchip_weight * p_pred)
@@ -143,6 +145,8 @@ We then linearly combine these two predictions. The weights are strictly locked 
 - Because the gaps are so small, PCHIP operates as a highly accurate local tangent. However, using 100% PCHIP makes the model too sensitive to localized market noise. The curve ends up hugging dirty data points too tightly, resulting in artificial spikes.
 - The Global Parabola acts as a mathematical shock-absorber. Because it evaluates the entire options chain, it ignores localized noise and maps the fundamental baseline of the market.
 - Why the empirical ratio of 71.5/28.5? This was something I figured out through rigorous testing, initially the 75/25 split seemed optimal but through many trials I discovered that the **71.5%** weight is just strong enough to strictly preserve the localized pricing tangent, while the **28.5%** macro-anchor applies a sufficient amount of tension necessary to smooth out local noise. Is this optimal though? Probably not. I believe the perfect ratio is different (albeit probably slightly), I just honestly was unable to find a technique and write the code to discover it.
+
+![Interior Filling](images/interior_filling.png)
 
 **Phase 3: Filling the Edges**
 ```python
