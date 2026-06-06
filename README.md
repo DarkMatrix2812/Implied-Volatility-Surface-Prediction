@@ -156,6 +156,8 @@ Why exactly 4 points? We needed localized isolation, but we also needed statisti
 - On the other hand, a 3-point parabola has zero degrees of freedom. If just one of those 3 market points is corrupted by a bad bid-ask spread, the math has no ability to correct itself, and the projected wing whips violently off the chart.
 - Four points act as the golden threshold. It provides exactly enough degrees of freedom to mathematically average out a single anomalous market print, while keeping the regression tightly clustered on the extreme edge of the smile.
 
+![Anchor Extrapolation](images/anchor_extrapolation.png)
+
 **Phase 4: The Global Median Safety Net**
 ```python
 self.filled_df.at[r_idx, m_col] = self._clip(val) if np.isfinite(val) else self.g_median
