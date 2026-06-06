@@ -214,6 +214,8 @@ $$\sqrt{0.0000394477} \approx 0.00628$$
 
 This means my algorithm is predicting the missing Implied Volatility to within $\pm 0.628\\%$ of the actual true market value.
 
+![Reconstructed 3D Volatility Surface](images/3d_surface_final.png)
+
 # 6. Potential Improvements
 
 While my MSE baseline serves as a strong mathematical foundation, this architecture is far from optimal for a true, production-grade trading environment. There were other things I intended on exploring and trying out, given there was more data or time.
