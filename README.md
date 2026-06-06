@@ -11,7 +11,7 @@ This expectation of future turbulence is called **Implied Volatility (IV)**.
 
 - **The Objective**: This project aims to mathematically predict those missing holes to reconstruct the true, complete NIFTY 50 options surface. We cannot just draw a straight line between points, we must respect the natural, parabolic curvature of the volatility smile.
 
-## Table Of Contents
+# Table Of Contents
 
 - [1. Project Pipeline](#1-project-pipeline)
 - [2. System Architecture](#2-system-architecture)
@@ -25,7 +25,7 @@ This expectation of future turbulence is called **Implied Volatility (IV)**.
 - [6. Potential Improvements](#6-potential-improvements)
 - [7. References](#7-references)
 
-## 1. Project Pipeline
+# 1. Project Pipeline
 
 In this section, I will explain the exact files involved:
 ```text
@@ -44,7 +44,7 @@ Once the execution is complete, the engine generates two distinct output files:
 - `filled_dataset.csv` **(Full Surface Data)**: The complete, fully reconstructed NIFTY options dataset. This allows for local inspection of the full volatility surface to verify the structural integrity of the predictions across all strikes and expiries.
 - `submission.csv` **(Kaggle Format)**: The official competition output. The code automatically extracts only the previously missing values, formats them into the required `datetime||strike` IDs, and generates this file ready for Kaggle evaluation.
 
-## 2. System Architecture
+# 2. System Architecture
 
 The codebase is built around a single, highly optimized Custom Cross-Sectional Curve-Fitting imputer class (`VolatilityReconstructor`). Instead of relying on heavy ML models that overfit, or time-series moving averages that lag the market, this architecture was designed with three strict principles:
 1. **Cross-Sectional Isolation (Row-by-Row Processing)**:\
@@ -56,7 +56,7 @@ Rather than plotting the options chain on an arbitrary X-axis of raw strike pric
 3. **Zonal Partitioning**:\
 The surface is structurally partitioned into two distinct zones - the Interior and the Edge. The model dynamically identifies whether a missing data point is bounded by known market data on both sides or on the the deep out-of-the-money wings. Depending on that, the point is automatically routed to the appropriate mathematical solver (detailed in the next section).
 
-## 3. Core Methodology
+# 3. Core Methodology
 
 Before diving into the depth of ideas, all good researchers first analyse their dataset.
 To build an optimal, deterministic curve-fitting engine, I first performed a rigorous micro-structural profile of the missing data (NaNs) in the options chain.\
@@ -161,24 +161,24 @@ We can't use forward-filling from previous timestamps as that introduces tempora
 However, the global median provides a mathematically safe, non-zero macro baseline. It is immune to extreme outliers unlike the _mean_ and requires no look-ahead bias.\
 Statistically too, it does minimize our MSE as falling back to the absolute center of the dataset guarantees that you will minimize the maximum possible error penalty.
 
-## 4. Experimental Iterations
+# 4. Experimental Iterations
 In quantitative finance (or any field for that matter), proving what _failed_ is just as important as proving what _succeeded_. In this section, I deep-dive into failed ideas or strategies that I tried out but did not yield significant returns.
 
-## 1 Total Variance Space ($IV^2$) & Log-Moneyness ($\ln(K/S)$)
+## Total Variance Space ($IV^2$) & Log-Moneyness ($\ln(K/S)$)
 **What I tried:**\
 In professional volatility surface construction (like the SVI model), interpolation is rarely done on raw volatility ($\sigma$). Instead, we attempted to map the dataset into Total Variance space ($\sigma^2$) using log-moneyness ($\ln(K/S)$). The theory was that squaring the volatility would smooth the data and prevent butterfly arbitrage, while log-space would create a more symmetric smile.
 
 **Output and why I think it didn't work:**\
 Mean Squared Error (MSE) worsened by roughly 5%. While this transformation is standard for highly symmetric indices like the S&P 500, the Indian NIFTY 50 exhibits an extreme, asymmetric "Put Skew" driven by downside tail-risk hedging. Log-moneyness forced an artificial symmetry onto the data, while Variance Space mathematically flattened the curvature of the deep wings. Together, they systematically underpriced the deep OTM risk premium.
 
-## 2 Overdetermined Edge Anchors ($N = 6$ or $8$)
+## Overdetermined Edge Anchors ($N = 6$ or $8$)
 **What I tried:**\
 If 4 anchor points are good for predicting the missing wing, I thought maybe 6 or even 8 should be better. By increasing the number of anchor points on the wing, the quadratic polynomial ($ax^2 + bx + c$) becomes heavily overdetermined, which theoretically creates a smoother fit that entirely ignores single-point noise.
 
 **Output and why I think it didn't work:**\
 Mean Squared Error degraded. Deep wings are driven by Skew (crash protection), while the inner strikes are driven by Delta (directional movement). Extending the anchor to $N=6$ or $N=8$ physically dragged data from the At-The-Money (ATM) region into the wing calculation. Because ATM strikes have a fundamentally flatter slope, cross-contaminating the math mathematically dragged the extrapolated wing downward, resulting in severe underpricing. $N=4$ was the absolute empirical maximum before Delta/Skew contamination occurred.
 
-## 3 Algorithmic Signal Smoothing (Kernel & Savitzky-Golay)
+## Algorithmic Signal Smoothing (Kernel & Savitzky-Golay)
 **What I tried:**\
 To systematically eliminate the bid-ask micro-bounce without relying on our Hybrid Polynomial Tension, I tested advanced signal-processing smoothers. Specifically, I implemented Non-Parametric Kernel Regression (Nadaraya-Watson) and the Savitzky-Golay (SG) Filter. The hypothesis was that a localized rolling window (SG) or a distance-weighted Gaussian kernel would perfectly average out the order-book noise while strictly preserving the true peaks and valleys of the volatility smirk.
 
@@ -188,21 +188,21 @@ While visually smooth (I observed it on plotting), our analysis revealed that th
 - Butterfly Arbitrage **(Convexity Violation)**: Savitzky-Golay fits unconstrained local polynomials. In noisy regions, this frequently created curves with negative second derivatives (forming a "W" shape). In quantitative finance, this implies negative probability density, which mathematically injects Butterfly Arbitrage (theoretical free money) directly into the surface.
 - **Smirk Eradication**: To successfully smooth out the micro-structure bid-ask bounce, the kernel bandwidths and SG windows had to be widened. This inadvertently blurred out the macro-signal, flattening the true, asymmetric "fear premium" (Put Skew) into a generic, featureless mean.
 
-## 4 Dynamic Volatility Guardrails (Bounding Boxes)
+## Dynamic Volatility Guardrails (Bounding Boxes)
 **What I tried:**\
 To prevent the edge parabolas from occasionally exploding to infinity ($x^2$), I introduced a dynamic "guardrail" algorithm. The system calculated the maximum and minimum known IVs currently trading in that exact minute, and strictly capped any extrapolated wing at `Max_IV * 1.10`.
 
 **Output and why I think it didn't work:**\
 Mean Squared Error worsened by over 10%. The bounding box was far too rigid. While it successfully stopped mathematical explosions, it artificially crushed the natural parabolic upswing of legitimate deep OTM options. The NIFTY market's true convexity on the extreme tails often genuinely exceeds the maximum IV of the inner liquid strikes. I think capping it effectively blinded the model to true tail risk.
 
-## 5 The 50/50 Asymptotic Global Wing Blend
+## The 50/50 Asymptotic Global Wing Blend
 **What I tried:**\
 As a last futile attempt at impoving my score I tested a 50/50 blend for the edges: blending 50% of the Global Macro Parabola with 50% of a flat, linear asymptote locked to the nearest known neighbor.
 
 **Output and why I think it didn't work:**\
 Catastrophic MSE drop. The Global Parabola was too heavily influenced by the opposite side of the options chain. Bleeding Call-side structure into Put-side extrapolation destroyed the wing's integrity. Furthermore, forcing the extreme wing to flatten linearly vastly underestimated the Gamma risk on the tails.
 
-## 5. Final Results
+# 5. Final Results
 
 After I finally submitted my `submission.csv`, I was able to achieve a final Kaggle Evaluation Score of **MSE = 0.0000394477**
 
@@ -214,23 +214,23 @@ $$\sqrt{0.0000394477} \approx 0.00628$$
 
 This means my algorithm is predicting the missing Implied Volatility to within $\pm 0.628\\%$ of the actual true market value.
 
-## 6. Potential Improvements
+# 6. Potential Improvements
 
 While my MSE baseline serves as a strong mathematical foundation, this architecture is far from optimal for a true, production-grade trading environment. There were other things I intended on exploring and trying out, given there was more data or time.
 
-**1. Dynamic State-Space Weighting**
+**Dynamic State-Space Weighting**
 
 I would engineer a dynamic weighting decay function $\alpha(K/S)$ that mathematically evaluates the real-time bid-ask spread of each specific strike. The engine would dynamically scale the PCHIP-to-Quadratic ratio strike-by-strike, applying heavy macro-gravity only where liquidity physically decays. The current `71.5 / 28.5` ratio was something I stumbled on inadvertently and I'm pretty sure that it is not optimal.
 
-**2. Progressive Edge Filling**
+**Progressive Edge Filling**
 
 Instead of projecting the quadratic polynomial all the way out into deep OTM territory in one calculation, the engine would calculate the wing iteratively. It would use the 4 known anchors to predict only the first missing strike. That prediction is then locked in as a new, confirmed anchor, moving the 4-point calculation window one step outward.
 
-**3. Strict-Causal Temporal Queuing**
+**Strict-Causal Temporal Queuing**
 
 I also considered implementing a Strict-Causal Temporal Queue (conceptually similar to a Kalman Filter). Instead of falling back to the Global Median during a catastrophic data wipeout, the engine would use the $t-1$ surface state as a weighted gravitational anchor to solve the $t_0$ gap. By making the queue strictly backward-looking, I could mathematically capture momentum volatility without ever violating the cardinal rule of look-ahead bias.
 
-## 7. References
+# 7. References
 
 1. Lee, R. W. (2004). *The Moment Formula for Implied Volatility at Extreme Strikes*. [PDF](https://math.uchicago.edu/~rl/moment.pdf)
 
