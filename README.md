@@ -69,6 +69,8 @@ To build an optimal, deterministic curve-fitting engine, I first performed a rig
 
 Because the mathematical environment of an "Interior" hole is fundamentally different from an "Edge" wing, the engine isolates them and solves them using separate techniques. Here is the exhaustive breakdown of the mathematical functions driving the code, and the reasoning behind why they were designed this way.
 
+![System Architecture Flowchart](images/architecture.png)
+
 ## 3.1 Data Initialization & Stratification
 Before any math is applied, the options chain must be parsed. The easiest way to do this in Python is to just iterate over the whole dataframe. I did not do that.
 
