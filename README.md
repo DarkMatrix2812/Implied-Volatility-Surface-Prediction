@@ -87,6 +87,8 @@ Every single prediction made by the engine is forced through this 2-line functio
 
 **Reasoning:** A quadratic polynomial doesn't know it's pricing a financial instrument — it's just drawing a line. If an extrapolated wing curves downward, a parabola will happily predict an Implied Volatility of -0.05. In quantitative finance, negative volatility is a lethal anomaly. If you feed $IV \le 0$ into a Black-Scholes pricer, it will lead to `DivisionByZero` error. I built `_clip` as a fail-safe to guarantee downstream pricing integrity, no matter how wild the parabola gets.
 
+![Failsafe Activation](images/failsafe_activation.png)
+
 ## 3.3 The Mathematical Solvers
 As mentioned before, it was imperative that we handled the interior and edge cells separately, for this I built two distinct specialized curve-fitting functions.
 
@@ -189,6 +191,8 @@ While visually smooth (I observed it on plotting), our analysis revealed that th
 - **Boundary Bias (Wing Droop)**: Both methods require data on both sides to calculate an average. On the deep wings, the lack of outer data strictly anchored the algorithms to the inner At-The-Money strikes. This violently dragged the extrapolated wing downward, completely failing to price tail risk.
 - Butterfly Arbitrage **(Convexity Violation)**: Savitzky-Golay fits unconstrained local polynomials. In noisy regions, this frequently created curves with negative second derivatives (forming a "W" shape). In quantitative finance, this implies negative probability density, which mathematically injects Butterfly Arbitrage (theoretical free money) directly into the surface.
 - **Smirk Eradication**: To successfully smooth out the micro-structure bid-ask bounce, the kernel bandwidths and SG windows had to be widened. This inadvertently blurred out the macro-signal, flattening the true, asymmetric "fear premium" (Put Skew) into a generic, featureless mean.
+
+![Liquidity Void](images/liquidity_void.png)
 
 ## Dynamic Volatility Guardrails (Bounding Boxes)
 **What I tried:**\
