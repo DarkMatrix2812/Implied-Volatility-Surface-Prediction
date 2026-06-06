@@ -67,6 +67,8 @@ To build an optimal, deterministic curve-fitting engine, I first performed a rig
 **Interior NaNs** (`4,491 cells`): These are "holes" bounded by known market quotes on both sides. Roughly 82.25% of the missing cells.\
 **Edge NaNs** (`969 cells`): These are deep Out-of-the-Money (OTM) strikes on the wings of the smile where liquidity completely decays. Roughly 17.75% of the missing cells.
 
+![Liquidity Void](images/liquidity_void.png)
+
 Because the mathematical environment of an "Interior" hole is fundamentally different from an "Edge" wing, the engine isolates them and solves them using separate techniques. Here is the exhaustive breakdown of the mathematical functions driving the code, and the reasoning behind why they were designed this way.
 
 ![System Architecture Flowchart](images/architecture.png)
@@ -192,7 +194,7 @@ While visually smooth (I observed it on plotting), our analysis revealed that th
 - Butterfly Arbitrage **(Convexity Violation)**: Savitzky-Golay fits unconstrained local polynomials. In noisy regions, this frequently created curves with negative second derivatives (forming a "W" shape). In quantitative finance, this implies negative probability density, which mathematically injects Butterfly Arbitrage (theoretical free money) directly into the surface.
 - **Smirk Eradication**: To successfully smooth out the micro-structure bid-ask bounce, the kernel bandwidths and SG windows had to be widened. This inadvertently blurred out the macro-signal, flattening the true, asymmetric "fear premium" (Put Skew) into a generic, featureless mean.
 
-![Liquidity Void](images/liquidity_void.png)
+![Smoothing Failure](images/smoothing_failure.png)
 
 ## Dynamic Volatility Guardrails (Bounding Boxes)
 **What I tried:**\
@@ -200,6 +202,8 @@ To prevent the edge parabolas from occasionally exploding to infinity ($x^2$), I
 
 **Output and why I think it didn't work:**\
 Mean Squared Error worsened by over 10%. The bounding box was far too rigid. While it successfully stopped mathematical explosions, it artificially crushed the natural parabolic upswing of legitimate deep OTM options. The NIFTY market's true convexity on the extreme tails often genuinely exceeds the maximum IV of the inner liquid strikes. I think capping it effectively blinded the model to true tail risk.
+
+![Dynamic Guardrails Failure](images/dynamic_guardrails_failure.png)
 
 ## The 50/50 Asymptotic Global Wing Blend
 **What I tried:**\
