@@ -67,11 +67,11 @@ To build an optimal, deterministic curve-fitting engine, I first performed a rig
 **Interior NaNs** (`4,491 cells`): These are "holes" bounded by known market quotes on both sides. Roughly 82.25% of the missing cells.\
 **Edge NaNs** (`969 cells`): These are deep Out-of-the-Money (OTM) strikes on the wings of the smile where liquidity completely decays. Roughly 17.75% of the missing cells.
 
-![Liquidity Void](images/liquidity_void.png)
+![Liquidity Void](for_generating_readme/liquidity_void.png)
 
 Because the mathematical environment of an "Interior" hole is fundamentally different from an "Edge" wing, the engine isolates them and solves them using separate techniques. Here is the exhaustive breakdown of the mathematical functions driving the code, and the reasoning behind why they were designed this way.
 
-![System Architecture Flowchart](images/architecture.png)
+![System Architecture Flowchart](for_generating_readme/architecture.png)
 
 ## 3.1 Data Initialization & Stratification
 Before any math is applied, the options chain must be parsed. The easiest way to do this in Python is to just iterate over the whole dataframe. I did not do that.
@@ -89,7 +89,7 @@ Every single prediction made by the engine is forced through this 2-line functio
 
 **Reasoning:** A quadratic polynomial doesn't know it's pricing a financial instrument — it's just drawing a line. If an extrapolated wing curves downward, a parabola will happily predict an Implied Volatility of -0.05. In quantitative finance, negative volatility is a lethal anomaly. If you feed $IV \le 0$ into a Black-Scholes pricer, it will lead to `DivisionByZero` error. I built `_clip` as a fail-safe to guarantee downstream pricing integrity, no matter how wild the parabola gets.
 
-![Failsafe Activation](images/failsafe_activation.png)
+![Failsafe Activation](for_generating_readme/failsafe_activation.png)
 
 ## 3.3 The Mathematical Solvers
 As mentioned before, it was imperative that we handled the interior and edge cells separately, for this I built two distinct specialized curve-fitting functions.
@@ -128,7 +128,7 @@ I used the explicit coordinate projection: $M = \frac{K}{S}$. By standardizing t
 
 **Reasoning:** I first fed the engine raw strike prices as the x-axis. The MSE was highly unstable. I realized that the underlying NIFTY index ($S$) is a moving target. A polynomial fitted to raw strikes will fail because the mathematical vertex of the curve is constantly moving.
 
-![Absolute Moneyness](images/absolute_moneyness.png)
+![Absolute Moneyness](for_generating_readme/absolute_moneyness.png)
 
 **Phase 2: Filling the Interior**
 ```python
@@ -146,7 +146,7 @@ We then linearly combine these two predictions. The weights are strictly locked 
 - The Global Parabola acts as a mathematical shock-absorber. Because it evaluates the entire options chain, it ignores localized noise and maps the fundamental baseline of the market.
 - Why the empirical ratio of 71.5/28.5? This was something I figured out through rigorous testing, initially the 75/25 split seemed optimal but through many trials I discovered that the **71.5%** weight is just strong enough to strictly preserve the localized pricing tangent, while the **28.5%** macro-anchor applies a sufficient amount of tension necessary to smooth out local noise. Is this optimal though? Probably not. I believe the perfect ratio is different (albeit probably slightly), I just honestly was unable to find a technique and write the code to discover it.
 
-![Interior Filling](images/interior_filling.png)
+![Interior Filling](for_generating_readme/interior_filling.png)
 
 **Phase 3: Filling the Edges**
 ```python
@@ -160,7 +160,7 @@ Why exactly 4 points? We needed localized isolation, but we also needed statisti
 - On the other hand, a 3-point parabola has zero degrees of freedom. If just one of those 3 market points is corrupted by a bad bid-ask spread, the math has no ability to correct itself, and the projected wing whips violently off the chart.
 - Four points act as the golden threshold. It provides exactly enough degrees of freedom to mathematically average out a single anomalous market print, while keeping the regression tightly clustered on the extreme edge of the smile.
 
-![Anchor Extrapolation](images/anchor_extrapolation.png)
+![Anchor Extrapolation](for_generating_readme/anchor_extrapolation.png)
 
 **Phase 4: The Global Median Safety Net**
 ```python
@@ -202,7 +202,7 @@ While visually smooth (I observed it on plotting), our analysis revealed that th
 - Butterfly Arbitrage **(Convexity Violation)**: Savitzky-Golay fits unconstrained local polynomials. In noisy regions, this frequently created curves with negative second derivatives (forming a "W" shape). In quantitative finance, this implies negative probability density, which mathematically injects Butterfly Arbitrage (theoretical free money) directly into the surface.
 - **Smirk Eradication**: To successfully smooth out the micro-structure bid-ask bounce, the kernel bandwidths and SG windows had to be widened. This inadvertently blurred out the macro-signal, flattening the true, asymmetric "fear premium" (Put Skew) into a generic, featureless mean.
 
-![Smoothing Failure](images/smoothing_failure.png)
+![Smoothing Failure](for_generating_readme/smoothing_failure.png)
 
 ## Dynamic Volatility Guardrails (Bounding Boxes)
 **What I tried:**\
@@ -211,7 +211,7 @@ To prevent the edge parabolas from occasionally exploding to infinity ($x^2$), I
 **Output and why I think it didn't work:**\
 Mean Squared Error worsened by over 10%. The bounding box was far too rigid. While it successfully stopped mathematical explosions, it artificially crushed the natural parabolic upswing of legitimate deep OTM options. The NIFTY market's true convexity on the extreme tails often genuinely exceeds the maximum IV of the inner liquid strikes. I think capping it effectively blinded the model to true tail risk.
 
-![Dynamic Guardrails Failure](images/dynamic_guardrails_failure.png)
+![Dynamic Guardrails Failure](for_generating_readme/dynamic_guardrails_failure.png)
 
 ## The 50/50 Asymptotic Global Wing Blend
 **What I tried:**\
@@ -232,7 +232,7 @@ $$\sqrt{0.0000523711} \approx 0.00724$$
 
 This means my algorithm is predicting the missing Implied Volatility to within $\pm 0.724\\%$ of the actual true market value.
 
-![Reconstructed 3D Volatility Surface](images/3d_surface_final.png)
+![Reconstructed 3D Volatility Surface](for_generating_readme/3d_surface_final.png)
 
 # 6. Potential Improvements
 
