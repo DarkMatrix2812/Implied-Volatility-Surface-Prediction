@@ -176,6 +176,8 @@ Statistically too, it does minimize our MSE as falling back to the absolute cent
 # 4. Experimental Iterations
 In quantitative finance (or any field for that matter), proving what _failed_ is just as important as proving what _succeeded_. In this section, I deep-dive into failed ideas or strategies that I tried out but did not yield significant returns.
 
+The codes to these are stored [here](failures/)
+
 ## Total Variance Space ($IV^2$) & Log-Moneyness ($$\ln(K/S)$$)
 **What I tried:**\
 In professional volatility surface construction (like the SVI model), interpolation is rarely done on raw volatility ($\sigma$). Instead, we attempted to map the dataset into Total Variance space ($\sigma^2$) using log-moneyness ($$\ln(K/S)$$). The theory was that squaring the volatility would smooth the data and prevent butterfly arbitrage, while log-space would create a more symmetric smile.
