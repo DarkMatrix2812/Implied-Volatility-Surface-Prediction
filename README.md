@@ -220,15 +220,15 @@ Catastrophic MSE drop. The Global Parabola was too heavily influenced by the opp
 
 # 5. Final Results
 
-After I finally submitted my `submission.csv`, I was able to achieve a final Kaggle Evaluation Score of **MSE = 0.0000394477**
+After I finally submitted my `submission.csv`, I was able to achieve a final Kaggle Evaluation Score of **MSE = 0.0000523711**
 
 **What does this number actually mean?**
 
 In quantitative finance, abstract loss metrics like MSE can obscure the real-world accuracy of a pricing model. To understand the physical accuracy of my `VolatilityReconstructor`, we take the Root Mean Squared Error (RMSE):
 
-$$\sqrt{0.0000394477} \approx 0.00628$$
+$$\sqrt{0.0000523711} \approx 0.00724$$
 
-This means my algorithm is predicting the missing Implied Volatility to within $\pm 0.628\\%$ of the actual true market value.
+This means my algorithm is predicting the missing Implied Volatility to within $\pm 0.724\\%$ of the actual true market value.
 
 ![Reconstructed 3D Volatility Surface](images/3d_surface_final.png)
 
